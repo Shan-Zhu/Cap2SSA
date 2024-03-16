@@ -1,0 +1,53 @@
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor
+from xgboost import XGBRegressor
+import sklearn as sk
+from sklearn.model_selection import train_test_split,cross_val_score,KFold
+
+# NOTE: Make sure that the outcome column is labeled 'target' in the data file
+input_data = pd.read_csv("CaptoSSA-database-noDOI.csv", sep=',', dtype=np.float64)
+features = input_data.drop('Specific surface area (m2/g)', axis=1)
+training_features, testing_features, training_target, testing_target = \
+            train_test_split(features, input_data['Specific surface area (m2/g)'], random_state=0)
+
+
+exported_pipeline = GradientBoostingRegressor(learning_rate=0.1, max_depth=5,  n_estimators=300)
+
+# Fix random state in exported estimator
+if hasattr(exported_pipeline, 'random_state'):
+    setattr(exported_pipeline, 'random_state', 0)
+
+exported_pipeline.fit(training_features, training_target)
+train_results= exported_pipeline.predict(training_features)
+test_results = exported_pipeline.predict(testing_features)
+
+strKFold = KFold(n_splits=5,shuffle=True,random_state=0)
+scores = cross_val_score(exported_pipeline, features, input_data['Specific surface area (m2/g)'],scoring='r2', cv=strKFold)
+print("KFold cross validation scores:{}".format(scores))
+print("Mean score of KFold cross validation:{:.3f}".format(scores.mean()))
+
+scores_MAE = cross_val_score(exported_pipeline, features, input_data['Specific surface area (m2/g)'],scoring='neg_mean_absolute_error', cv=strKFold)
+print("KFold cross validation scores_MAE:{}".format(scores_MAE))
+print("Mean score of KFold cross validation_MAE:{:.3f}".format(scores_MAE.mean()))
+
+scores_RMSE = cross_val_score(exported_pipeline, features, input_data['Specific surface area (m2/g)'],scoring='neg_root_mean_squared_error', cv=strKFold)
+print("KFold cross validation scores_RMSE:{}".format(scores_RMSE))
+print("Mean score of KFold cross validation_RMSE:{:.3f}".format(scores_RMSE.mean()))
+
+result1=pd.DataFrame(columns=['Test_real','Test_predict'])
+result2=pd.DataFrame(columns=['Train_real','Train_predict'])
+result1['Test_real']=testing_target
+result1['Test_predict']=test_results
+result2['Train_real']=training_target
+result2['Train_predict']=train_results
+result1.reset_index(drop=True, inplace=True)
+result2.reset_index(drop=True, inplace=True)
+merged_result = pd.concat([result1, result2], axis=1, ignore_index=False)
+print("Train r2 : %.4g" % sk.metrics.r2_score(training_target, train_results))
+print("Test r2 : %.4g" % sk.metrics.r2_score(testing_target, test_results))
+
+out_path1='result-train-test-SSA-GBR.csv'
+merged_result.to_csv(out_path1,sep=',',index=False, header=True)
+
+print('done')
