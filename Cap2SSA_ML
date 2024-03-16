@@ -3,9 +3,7 @@
 import numpy as np
 import pandas as pd
 import sklearn as sk
-from tpot import TPOTRegressor
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.svm import SVR
@@ -17,8 +15,6 @@ from sklearn.model_selection import train_test_split, cross_val_score, KFold
 from sklearn.metrics import r2_score
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import Ridge
-from sklearn.svm import LinearSVR
-from sklearn.neural_network import MLPRegressor
 
 # input data
 data_input=pd.read_csv('CaptoSSA-database-noDOI.csv', sep=',')
@@ -56,16 +52,7 @@ gbr_model.fit(X_train, y_train)
 ridge_model = Ridge()
 ridge_model.fit(X_train, y_train)
 
-lsvr_model = LinearSVR()
-lsvr_model.fit(X_train, y_train)
-
-mlpr_model = MLPRegressor()
-mlpr_model.fit(X_train, y_train)
-
-
-
 kfold = KFold(n_splits=5,shuffle=True,random_state=0) 
-
 
 print("\n 5-fold R2 score: ")
 print("\tlr_mode", cross_val_score(lr_model, features, labels, scoring='r2', cv=kfold).mean())
@@ -77,5 +64,3 @@ print("\tdtr_mode", cross_val_score(dtr_model, features, labels, scoring='r2', c
 print("\tsvr_model", cross_val_score(svr_model, features, labels, scoring='r2', cv=kfold).mean())
 print("\tgbr_model", cross_val_score(gbr_model, features, labels, scoring='r2', cv=kfold).mean())
 print("\tridge_model", cross_val_score(ridge_model, features, labels, scoring='r2', cv=kfold).mean())
-print("\tLinear Support Vector Regression", cross_val_score(lsvr_model, features, labels, scoring='r2', cv=kfold).mean())
-print("\tMulti-layer Perceptron Regression", cross_val_score(mlpr_model , features, labels, scoring='r2', cv=kfold).mean())
