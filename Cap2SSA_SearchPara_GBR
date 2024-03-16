@@ -1,0 +1,39 @@
+from sklearn.model_selection import GridSearchCV
+import numpy as np
+import pandas as pd
+import sklearn as sk
+from sklearn.model_selection import train_test_split, cross_val_score, KFold
+from sklearn.metrics import r2_score
+from sklearn.ensemble import GradientBoostingRegressor
+
+data_input=pd.read_csv('CaptoSSA-database-noDOI.csv', sep=',')
+
+labels = data_input['Specific surface area (m2/g)']
+features = data_input.drop('Specific surface area (m2/g)', axis=1)
+
+X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=0)
+
+param_grid = {
+    'n_estimators': [50, 100, 150, 200, 300],
+    'learning_rate': [0.01, 0.1, 0.2, 0.5, 1],
+    'max_depth': [1, 2, 5, 8, 10],
+}
+
+gbr_model = GradientBoostingRegressor()
+
+strKFold = KFold(n_splits=5,shuffle=True,random_state=0) 
+
+grid_search = GridSearchCV(gbr_model, param_grid, scoring='r2', cv=strKFold)
+
+grid_search.fit(features, labels)
+results = pd.DataFrame(grid_search.cv_results_)
+
+param_combinations = results['params'].apply(pd.Series)
+results = pd.concat([param_combinations, results], axis=1)
+
+results.to_csv("GBR_grid_search_results.csv", index=False)
+
+print("best_params:", grid_search.best_params_)
+print("best_score:", grid_search.best_score_)
+
+
